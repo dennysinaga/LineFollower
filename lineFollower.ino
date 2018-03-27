@@ -18,37 +18,40 @@
 int sensorPin[SENSOR_COUNT] = {A1, A2, A3, A4, A5};
 int sensorVal[SENSOR_COUNT];
 int ledPin[SENSOR_COUNT] = {2,3,4,5,6};
-int leftLedPin = 8;
-int rightLedPin = 9;
-int remoteSensorPin = LED_BUILTIN;
+int leftLedPin = 7;
+int rightLedPin = 8;
+int remoteSensorPin = 13;
 int remoteSensorVal;
 unsigned long lastTime;
-unsigned long currentTime;
 boolean(isOn);
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(remoteSensorPin, INPUT);
   digitalWrite(LED_BUILTIN, LOW);
-  isOn = false;
+  lastTime = millis();
+  isOn = true;
 }
 
 void loop() {
   remoteSensorVal = digitalRead(remoteSensorPin);
+  Serial.println(remoteSensorVal);
+//  buttonPressed();
   if(powerSwitch()) {
     togglePower();
   }
 //  if(buttonPressed()) {
   if(isOn) {
-    // read sensors data
-    for(int i = 0; i < SENSOR_COUNT; i++) {
-      sensorVal[i] = analogRead(sensorPin[i]);
-      Serial.print(sensorVal[i]); 
-      Serial.print(","); 
-    }
-    Serial.println();
-  //  blinker();
+//    for(int i = 0; i < SENSOR_COUNT; i++) {
+//      sensorVal[i] = analogRead(sensorPin[i]);
+//      Serial.print(sensorVal[i]); 
+//      Serial.print(","); 
+//    }
+//    Serial.println();
     int score = getScore();
+//    Serial.println(score);
     displayLeds();
     showDirection(score);
   //  steer(score);
@@ -68,33 +71,45 @@ void buttonPressed() {
   if(remoteSensorVal < 1) {
     lastTime = millis();
   }
-  if(millis() - lastTime < 5)
-    digitalWrite(7, HIGH);
-  else
-    digitalWrite(7, LOW);
+  if(millis() - lastTime < 50){
+    isOn = true;
+    digitalWrite(LED_BUILTIN, HIGH);
+  } else {
+    isOn = false;
+    digitalWrite(LED_BUILTIN, LOW);
+  }
 }
+
+//void buttonPressed() {
+////  Serial.println(remoteSensorVal);
+//  if(remoteSensorVal < 1) {
+//    isOn = true;
+//    digitalWrite(LED_BUILTIN, HIGH);
+//  } else {
+//    isOn = false;
+//    digitalWrite(LED_BUILTIN, LOW);
+//  }
+//}
 
 boolean powerSwitch() {
   if(remoteSensorVal < 1) {
-    currentTime = millis();
-    if(currentTime - lastTime > 300) {
-      lastTime = currentTime;
+    if(millis() - lastTime > 300) {
       isOn = !isOn;
       return true;
     }
+    lastTime = millis();
   }
   return false;
 }
 
 void togglePower(){
-  int ledState = digitalRead(7);
   if(isOn){
-    isOn = false;
-    digitalWrite(remoteSensorPin, LOW);
+    isOn = true;
+    digitalWrite(LED_BUILTIN, HIGH);
   }
   else {
-    isOn = true;
-    digitalWrite(remoteSensorPin,HIGH);
+    isOn = false;
+    digitalWrite(LED_BUILTIN,LOW);
   }
 }
 
@@ -102,24 +117,24 @@ int getScore(){
   return (-2) * sensorVal[0] + (-1) * sensorVal[1] + sensorVal[3] + 2 * sensorVal[4];
 }
 
-void blinker(){
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(500);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-}
-
-//void steer(int score){
-//  double normalizedScore = (double) score / 1500;
-//  analogWrite(leftMotorPin, SPEED_MAX);
-//  analogWrite(rightMotorPin, SPEED_MAX);
-//  if(score > DIRECTION_THRESHOLD){
-//    analogWrite(rightMotorPin, SPEED_MAX * (1 - normalizedScore));
-//  }else if(score < -DIRECTION_THRESHOLD){
-//    analogWrite(leftMotorPin, SPEED_MAX * (1 + normalizedScore));
-//  }
+//void blinker(){
+//  digitalWrite(LED_BUILTIN, LOW);
+//  delay(500);
+//  digitalWrite(LED_BUILTIN, HIGH);
+//  delay(500);
 //}
-
+//
+////void steer(int score){
+////  double normalizedScore = (double) score / 1500;
+////  analogWrite(leftMotorPin, SPEED_MAX);
+////  analogWrite(rightMotorPin, SPEED_MAX);
+////  if(score > DIRECTION_THRESHOLD){
+////    analogWrite(rightMotorPin, SPEED_MAX * (1 - normalizedScore));
+////  }else if(score < -DIRECTION_THRESHOLD){
+////    analogWrite(leftMotorPin, SPEED_MAX * (1 + normalizedScore));
+////  }
+////}
+//
 void showDirection(int score){
   digitalWrite(leftLedPin, LOW);
   digitalWrite(rightLedPin, LOW);
