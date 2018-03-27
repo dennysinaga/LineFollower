@@ -20,8 +20,10 @@ int sensorVal[SENSOR_COUNT];
 int ledPin[SENSOR_COUNT] = {2,3,4,5,6};
 int leftLedPin = 8;
 int rightLedPin = 9;
-int lastTime;
-int currentTime;
+int remoteSensorPin = LED_BUILTIN;
+int remoteSensorVal;
+unsigned long lastTime;
+unsigned long currentTime;
 boolean(isOn);
 
 void setup() {
@@ -32,7 +34,11 @@ void setup() {
 }
 
 void loop() {
-  powerSwitch();
+  remoteSensorVal = digitalRead(remoteSensorPin);
+  if(powerSwitch()) {
+    togglePower();
+  }
+//  if(buttonPressed()) {
   if(isOn) {
     // read sensors data
     for(int i = 0; i < SENSOR_COUNT; i++) {
@@ -58,18 +64,38 @@ void displayLeds(){
   }
 }
 
+void buttonPressed() {
+  if(remoteSensorVal < 1) {
+    lastTime = millis();
+  }
+  if(millis() - lastTime < 5)
+    digitalWrite(7, HIGH);
+  else
+    digitalWrite(7, LOW);
+}
+
 boolean powerSwitch() {
-  int remoteSensorVal = digitalRead(remoteSensorPin);
-  //Filter out random noise
   if(remoteSensorVal < 1) {
     currentTime = millis();
-    if(currentTime - lastTime > 150) {
+    if(currentTime - lastTime > 300) {
       lastTime = currentTime;
       isOn = !isOn;
       return true;
     }
   }
   return false;
+}
+
+void togglePower(){
+  int ledState = digitalRead(7);
+  if(isOn){
+    isOn = false;
+    digitalWrite(remoteSensorPin, LOW);
+  }
+  else {
+    isOn = true;
+    digitalWrite(remoteSensorPin,HIGH);
+  }
 }
 
 int getScore(){
